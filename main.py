@@ -2,7 +2,7 @@
 ## a tool to help manage your flatpak container data
 ## 07/08/2024
 
-version = '0.1.0'
+version = '0.2.1'
 
 import argparse, sys, os, toml, shutil
 
@@ -75,6 +75,20 @@ def create_profile(app_id, profile_name):
             s = toml.dump(fppdata, f)
         return True
 
+def delete_profile(app_id, profile_name):
+    setup_flatpak(app_id)
+    try:
+        os.rmdir(f'{wrk_dir}/profiles/{app_id}+{profile_name}')
+    except FileNotFoundError:
+        print(f'Profile "{profile_name}" does not exist')
+        # we count this as a success because the profile doesnt exist
+        return True
+    else:
+        fppdata[app_id]['profiles'].remove(profile_name)
+        with open(f'{wrk_dir}/data.toml', 'w') as f:
+            s = toml.dump(fppdata, f)
+        return True
+
 def set_active_profile(app_id, profile_name):
     if os.path.exists(f'{wrk_dir}/profiles/{app_id}+{profile_name}'):
         # remove existing symlink
@@ -132,32 +146,41 @@ def subcommand(name, args=[], parent=subparsers):
 
 # -- commands --
 
-@subcommand("list")
+@subcommand("list", [argument("app_id", help="(OPTIONAL) Flatpak app identifier (ex. com.example.ExampleApp)", nargs='?')])
 def c_list(args):
     """Lists all profiles"""
     appsummary = ''
-    for app_id in fppdata:
+    if args.app_id == None:
+        for app_id in fppdata:
+            appsummary = appsummary+f'\n{app_id}'
+            for profile in fppdata[app_id]['profiles']:
+                appsummary = appsummary+f'\n - {profile}'
+    else:
+        app_id = args.app_id
         appsummary = appsummary+f'\n{app_id}'
         for profile in fppdata[app_id]['profiles']:
             appsummary = appsummary+f'\n - {profile}'
     print(appsummary)
-    # ...
 
 @subcommand("create", [argument("app_id", help="Flatpak app identifier (ex. com.example.ExampleApp)"), argument("profile_name", help="Name of profile to create")])
 def c_create(args):
     """Create a new profile"""
-    # ...
     create_profile(args.app_id, args.profile_name)
 
 @subcommand("delete", [argument("app_id", help="Flatpak app identifier (ex. com.example.ExampleApp)"), argument("profile_name", help="Name of profile to delete")])
 def c_delete(args):
     """Delete a profile"""
-    # ...
+    yn = input('WARNING: This action is irreversible! Are you absolutely sure you want to delete this profile? [y/N]: ')
+    if yn.lower() == 'y':
+        x = delete_profile(args.app_id, args.profile_name)
+        if x:
+            print(f'Deleted profile "{args.profile_name}" from {args.app_id}')
+    else:
+        return
 
 @subcommand("use", [argument("app_id", help="Flatpak app identifier (ex. com.example.ExampleApp)"), argument("profile_name", help="Name of profile to set as the active one")])
 def c_use(args):
     """Sets the active profile"""
-    # ...
     x = set_active_profile(args.app_id, args.profile_name)
     if x:
         print(f'Set profile of {args.app_id} to "{args.profile_name}"')
