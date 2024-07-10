@@ -152,12 +152,13 @@ def c_list(args):
     appsummary = ''
     if args.app_id == None:
         for app_id in fppdata:
-            appsummary = appsummary+f'\n{app_id}'
+            appsummary = appsummary+f'{app_id}'
             for profile in fppdata[app_id]['profiles']:
                 appsummary = appsummary+f'\n - {profile}'
+            appsummary = appsummary+'\n'
     else:
         app_id = args.app_id
-        appsummary = appsummary+f'\n{app_id}'
+        appsummary = appsummary+f'{app_id}'
         for profile in fppdata[app_id]['profiles']:
             appsummary = appsummary+f'\n - {profile}'
     print(appsummary)
@@ -170,11 +171,11 @@ def c_create(args):
 @subcommand("delete", [argument("app_id", help="Flatpak app identifier (ex. com.example.ExampleApp)"), argument("profile_name", help="Name of profile to delete")])
 def c_delete(args):
     """Delete a profile"""
-    yn = input('WARNING: This action is irreversible! Are you absolutely sure you want to delete this profile? [y/N]: ')
+    yn = input('⚠  WARNING: This action is irreversible! Are you absolutely sure you want to delete this profile? [y/N]: ')
     if yn.lower() == 'y':
         x = delete_profile(args.app_id, args.profile_name)
         if x:
-            print(f'Deleted profile "{args.profile_name}" from {args.app_id}')
+            print(f'🗑️  Deleted profile "{args.profile_name}" from {args.app_id}')
     else:
         return
 
@@ -183,7 +184,7 @@ def c_use(args):
     """Sets the active profile"""
     x = set_active_profile(args.app_id, args.profile_name)
     if x:
-        print(f'Set profile of {args.app_id} to "{args.profile_name}"')
+        print(f'✔  Set profile of {args.app_id} to "{args.profile_name}"')
 
 @subcommand("test")
 def c_test(args):
