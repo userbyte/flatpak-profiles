@@ -83,6 +83,10 @@ def delete_profile(app_id, profile_name):
         print(f'Profile "{profile_name}" does not exist')
         # we count this as a success because the profile doesnt exist
         return True
+    except Exception as e:
+        # unknown error
+        print(f'ERROR: unknown error "{e}"')
+        return False
     else:
         fppdata[app_id]['profiles'].remove(profile_name)
         with open(f'{wrk_dir}/data.toml', 'w') as f:
@@ -185,6 +189,16 @@ def c_use(args):
     x = set_active_profile(args.app_id, args.profile_name)
     if x:
         print(f'✔  Set profile of {args.app_id} to "{args.profile_name}"')
+    else:
+        yn = input(f'Would you like to create and switch to it? [y/N]: ')
+        if yn.lower() == 'y':
+            print('Creating...')
+            create_profile(args.app_id, args.profile_name)
+            print('Switching...')
+            set_active_profile(args.app_id, args.profile_name)
+            print(f'✔  Set profile of {args.app_id} to "{args.profile_name}"')
+        else:
+            return
 
 @subcommand("test")
 def c_test(args):
