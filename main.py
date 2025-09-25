@@ -2,7 +2,7 @@
 ## a tool to help manage your flatpak container data
 ## 07/08/2024
 
-version = '0.2.1'
+version = '0.2.3'
 
 import argparse, sys, os, toml, shutil
 
@@ -88,6 +88,13 @@ def delete_profile(app_id, profile_name):
         print(f'ERROR: unknown error "{e}"')
         return False
     else:
+        # check if the profile we're removing is an active one
+        if fppdata[app_id]['active'] == profile_name:
+            # if it is, set the profile to a default one so the app isnt broken
+            print(f'⚠  WARNING: You are deleting the active profile for {app_id}. The default profile will be used as a fallback to prevent your app from breaking.')
+            print('Falling back to "default" profile...')
+            set_active_profile(app_id, "default")
+
         fppdata[app_id]['profiles'].remove(profile_name)
         with open(f'{wrk_dir}/data.toml', 'w') as f:
             s = toml.dump(fppdata, f)
@@ -100,6 +107,9 @@ def set_active_profile(app_id, profile_name):
 
         # set a new one
         os.symlink(f'{wrk_dir}/profiles/{app_id}+{profile_name}', f'{HOME}/.var/app/{app_id}')
+        fppdata[app_id]['active'] = profile_name
+        with open(f'{wrk_dir}/data.toml', 'w') as f:
+            s = toml.dump(fppdata, f)
 
         return True
     else:
